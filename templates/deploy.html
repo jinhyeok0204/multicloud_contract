@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}가상머신 배포{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mt-5">
+            <div class="card-body">
+                <h2 class="text-center">가상머신 배포</h2>
+                <form id="deploy-form" action="/deploy_summary" method="POST">
+                    <!-- 여러 CSP 선택 가능 -->
+                    <div class="form-group mb-3">
+                        <label>CSP 선택</label><br>
+                        <input type="checkbox" name="csp" value="AWS"> AWS<br>
+                        <input type="checkbox" name="csp" value="GCP"> GCP<br>
+                        <input type="checkbox" name="csp" value="Azure"> Azure<br>
+                    </div>
+
+                    <!-- VM 개수 입력 -->
+                    <div class="form-group mb-3">
+                        <label>가상머신 개수</label>
+                        <input type="number" name="vm_count" class="form-control" required>
+                    </div>
+
+                    <!-- 비용 상한 입력 -->
+                    <div class="form-group mb-3">
+                        <label>비용 상한 (USD)</label>
+                        <input type="number" name="cost_limit" class="form-control" required>
+                    </div>
+
+                    <!-- RTT 상한 입력 -->
+                    <div class="form-group mb-3">
+                        <label>RTT 상한 (ms)</label>
+                        <input type="number" name="rtt_limit" class="form-control" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">배포 명세서 보기</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

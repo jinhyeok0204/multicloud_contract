@@ -1,0 +1,36 @@
+/* 기본 스타일 */
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+h2 {
+    font-weight: bold;
+}
+
+.form-control {
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.container {
+    margin-top: 30px;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: #007bff;
+    font-weight: bold;
+}

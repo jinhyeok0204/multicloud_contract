@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}배포 명세서{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mt-5">
+            <div class="card-body">
+                <h2 class="text-center">배포 명세서</h2>
+                <p><strong>선택한 CSP:</strong> {{ csp_list }}</p>
+                <p><strong>최적 배포 위치 (CSP 경로):</strong> {{ best_route }}</p>
+                <p><strong>가상머신 개수:</strong> {{ vm_count }}</p>
+                <p><strong>비용 상한:</strong> {{ cost_limit }} USD</p>
+                <p><strong>RTT 상한:</strong> {{ rtt_limit }} ms</p>
+                <p><strong>총 비용:</strong> {{ total_cost }} USD</p>
+                <p><strong>총 RTT:</strong> {{ total_rtt }} ms</p>
+
+                <form action="/deploy" method="POST">
+                    <input type="hidden" name="csp_list" value="{{ csp_list }}">
+                    <input type="hidden" name="vm_count" value="{{ vm_count }}">
+                    <input type="hidden" name="cost_limit" value="{{ cost_limit }}">
+                    <input type="hidden" name="rtt_limit" value="{{ rtt_limit }}">
+                    <input type="hidden" name="total_rtt" value="{{ total_rtt }}">
+                    <input type="hidden" name="total_cost" value="{{ total_cost }}">
+                    
+                    <button type="submit" class="btn btn-primary btn-block">확인하고 배포 진행</button>
+                </form>
+
+                <a href="/deploy" class="btn btn-secondary btn-block">취소</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

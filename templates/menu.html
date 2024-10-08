@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}메뉴{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center">
+        <div class="card mt-5">
+            <div class="card-body">
+                <h2 class="text-center">메뉴</h2>
+                <p><a href="/credentials" class="btn btn-secondary btn-block">자격 증명 등록</a></p>
+                <p><a href="/deploy" class="btn btn-primary btn-block">가상머신 배포</a></p>
+                <p><a href="/logout" class="btn btn-danger btn-block">로그아웃</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

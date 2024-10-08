@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}배포 명세서{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>배포 명세서</h2>
+
+    {% if deployments %}
+        <ul>
+            {% for deployment in deployments %}
+                <li>{{ deployment.details }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>등록된 배포 명세서가 없습니다.</p>
+    {% endif %}
+</div>
+{% endblock %}
