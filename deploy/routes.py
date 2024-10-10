@@ -1,6 +1,6 @@
 # 가상머신 배포 기능을 담당하는 모듈
 from flask import Blueprint, render_template, request, redirect, flash, url_for, session
-from app import db
+
 from models import User
 from optimize.optimizer import make_info_dict, nsga2_with_filtered_routes, select_weighted_best, make_combination
 
@@ -86,3 +86,8 @@ def deploy():
         return redirect(url_for('main.menu'))
 
     return render_template('deploy.html', user=user)
+
+
+@deploy_db.route('/deployments')
+def deployment_specification():
+    

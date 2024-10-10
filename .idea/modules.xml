@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/cloud_contranct.iml" filepath="$PROJECT_DIR$/.idea/cloud_contranct.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/cloud_contract.iml" filepath="$PROJECT_DIR$/.idea/cloud_contract.iml" />
     </modules>
   </component>
 </project>

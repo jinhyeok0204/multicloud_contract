@@ -1,36 +1,53 @@
-/* 기본 스타일 */
-body {
-    background-color: #f8f9fa;
+/* 네비게이션 바 */
+.navbar {
+    background-color: #343a40;
+    padding: 10px 20px;
 }
 
-.card {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
+.navbar .navbar-brand {
+    font-size: 1.5rem;
+    letter-spacing: 2px;
 }
 
-.btn-block {
-    width: 100%;
+.navbar .nav-link {
+    font-size: 1.1rem;
+    margin-right: 15px;
 }
 
-h2 {
+.navbar .dropdown-menu {
+    background-color: #6c757d;
+}
+
+.navbar .dropdown-item:hover {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+
+/* 기본 버튼 스타일 */
+.btn {
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+
+/* 플래시 메시지 */
+.alert {
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+/* 폼 스타일 */
+.form-group label {
     font-weight: bold;
 }
 
 .form-control {
     border-radius: 5px;
-    padding: 10px;
+    padding: 12px;
 }
 
-.navbar-brand {
-    font-weight: bold;
-    font-size: 1.5rem;
-}
-
-.container {
-    margin-top: 30px;
-}
-
-.navbar-light .navbar-nav .nav-link {
-    color: #007bff;
-    font-weight: bold;
+/* 페이지 콘텐츠 */
+.container h2 {
+    margin-bottom: 20px;
+    font-weight: 700;
 }

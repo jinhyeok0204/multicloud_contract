@@ -1,20 +1,24 @@
-<!-- base.html -->
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Flask App{% endblock %}</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <meta name="description" content="Flask 웹 애플리케이션 템플릿">
+    <meta name="keywords" content="Flask, 웹 애플리케이션, 드롭다운 메뉴">
+    <title>{% block title %}멀티클라우드 배포{% endblock %}</title>
+
+    <!-- 부트스트랩 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- 커스텀 CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <!-- 네비게이션 바 -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg p-3 mb-5">
         <div class="container">
-            <a class="navbar-brand" href="/">홈</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <a class="navbar-brand text-light font-weight-bold" href="{{ url_for('main.home') }}">Cloud Deployment</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -22,23 +26,24 @@
                     {% if 'username' in session %}
                         <!-- 드롭다운 메뉴로 회원 정보 관련 기능 추가 -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 회원 정보
                             </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <a class="dropdown-item" href="/deployments">배포 명세서 보기</a>
-                                <a class="dropdown-item" href="/profile">회원 정보 수정</a>
-                            </div>
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li><a class="dropdown-item" href="/deployment_spec">배포 명세서 보기</a></li>
+                                <li><a class="dropdown-item" href="/credentials/view">등록된 인증 정보</a></li>
+                                <li><a class="dropdown-item" href="/profile">회원 정보 수정</a></li>
+                            </ul>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/logout">로그아웃</a>
+                            <a class="nav-link text-light" href="/logout">로그아웃</a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="/login">로그인</a>
+                            <a class="nav-link text-light" href="/login">로그인</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/signup">회원가입</a>
+                            <a class="nav-link text-light" href="/signup">회원가입</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -46,15 +51,29 @@
         </div>
     </nav>
 
+    <!-- 플래시 메시지 표시 -->
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert alert-dismissible fade show" role="alert">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+
     <!-- 페이지 콘텐츠 -->
     <div class="container mt-5">
         {% block content %}
         {% endblock %}
     </div>
 
-    <!-- Bootstrap JS, Popper.js 추가 -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- 부트스트랩 및 팝업 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
