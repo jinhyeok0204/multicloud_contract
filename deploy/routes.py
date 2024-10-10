@@ -88,6 +88,6 @@ def deploy():
     return render_template('deploy.html', user=user)
 
 
-@deploy_db.route('/deployments')
+@deploy_bp.route('/deployments')
 def deployment_specification():
-    
+    pass
