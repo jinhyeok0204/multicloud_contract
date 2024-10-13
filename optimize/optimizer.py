@@ -1,104 +1,65 @@
 import random
 from deap import base, creator, algorithms, tools
 import pandas as pd
+from collections import deque
 
 
 def filter_routes(route_list, csp_list, rtt_limit, cost_limit):
-    filtered_routes = []
 
-    for route in route_list:
-        if all(csp.split('-')[0] in csp_list for csp in route['route']):
-            # RTT 및 비용 상한을 넘지 않는 경로만 추가
-            if route['total_rtt'] <= rtt_limit and route['total_cost'] <= cost_limit:
-                filtered_routes.append(route)
-
-    return filtered_routes
+    return [
+        route for route in route_list
+        if all(csp.split('-')[0] in csp_list for csp in route['route']) and
+        route['total_rtt'] <= rtt_limit and route['total_cost'] <= cost_limit
+    ]
 
 
 # 사용자가 제공한 데이터를 기반으로 최적화 정보를 구성
-def make_info_dict():
-    info_dict = dict()
-    df = pd.read_excel('Combinations.xlsx')  # 엑셀 파일에서 데이터 로드
-    start_region = df['start region']
-    end_region = df['end region']
+def make_info_dict(excel_file):
+    info_dict = {}
 
-    set_start = set(start_region)
-    set_end = set(end_region)
+    df = pd.read_excel(excel_file)
 
-    print(len(set_start), len(set_end))
-    for i in range(len(df)):
-        row = df.iloc[i]
-
+    for _, row in df.iterrows():
         start = f"{row['start csp']}-{row['start region']}"
         end = f"{row['end csp']}-{row['end region']}"
         rtt = row['rtt']
         cost = row['total cost']
 
-        if start in info_dict.keys():
-            info_dict[start].append((end, rtt, cost))
-        else:
-            info_dict[start] = [(end, rtt, cost)]
+        if start not in info_dict:
+            info_dict[start] = []
+        info_dict[start].append((end, rtt, cost))
 
     return info_dict
 
 
-# 경로 최적화를 위한 메모이제이션 및 경로 탐색 함수
-def find_routes(info_dict, start, count, current_route, total_rtt, total_cost, visited, routes_list, cache, unique_routes):
-    route_key = (start, tuple(current_route))  # 캐시를 위한 키 (시작 노드와 경로)
-
-    if route_key in cache:
-        # 메모이제이션: 캐시에 이미 있는 경로의 계산 결과를 사용
-        cached_rtt, cached_cost = cache[route_key]
-        total_rtt += cached_rtt
-        total_cost += cached_cost
-        if tuple(current_route) not in unique_routes:
-            routes_list.append({
-                'route': current_route,
-                'total_rtt': total_rtt,
-                'total_cost': total_cost
-            })
-            unique_routes.add(tuple(current_route))
-            return
-
-    if count == 0:
-        # 경로가 완성되면 리스트에 저장
-        if tuple(current_route) not in unique_routes:
-            routes_list.append({
-                'route': current_route,
-                'total_rtt': total_rtt,
-                'total_cost': total_cost
-            })
-            unique_routes.add(tuple(current_route))
-
-        # 경로 결과를 캐시에 저장
-        cache[route_key] = (total_rtt, total_cost)
-        return
-
-    if start not in info_dict:
-        return
-
-    visited.add(start)
-
-    # 경로를 재귀적으로 계산
-    for end, rtt, cost in info_dict[start]:
-        if end not in visited:
-            new_route = current_route + [end]
-            find_routes(info_dict, end, count - 1, new_route, total_rtt + rtt, total_cost + cost, visited, routes_list,
-                        cache, unique_routes)
-
-    visited.remove(start)
-    # 경로 결과를 캐시에 저장
-    cache[route_key] = (total_rtt, total_cost)
-
-
-# 가능한 경로 조합을 생성하는 함수
-def make_combination(info_dict, count):
+def find_routes(info_dict, count):
     routes_list = []
     unique_routes = set()
-    cache = {}  # 메모이제이션을 위한 캐시
 
     for start in info_dict:
-        find_routes(info_dict, count - 1, [start], 0, 0, set(), routes_list, cache, unique_routes)
+        q = deque([([start], 0, 0)])
+
+        while q:
+            current_route, total_rtt, total_cost = q.popleft()
+
+            if len(current_route) == count:
+                if tuple(current_route) not in unique_routes:
+                    routes_list.append({
+                        'route': current_route,
+                        'total_rtt' : total_rtt,
+                        'total_cost': total_cost
+                    })
+                    unique_routes.add(tuple(current_route))
+                continue
+
+            last_node = current_route[-1]
+
+            # 다음 노드 탐색
+            if last_node in info_dict:
+                for end, rtt, cost in info_dict[last_node]:
+                    if end not in current_route: # 중복 방지
+                        new_route = current_route + [end]
+                        q.append((new_route, total_rtt + rtt, total_cost + cost))
 
     return routes_list
 
@@ -111,7 +72,6 @@ def nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit):
     if not filtered_routes:
         raise ValueError("사용자 조건에 맞는 경로가 없습니다.")
 
-
     creator.create("FitnessMulti", base.Fitness, weights=(-1.0, -1.0))  # 두 개의 목표, 둘 다 최소화
     creator.create("Individual", list, fitness=creator.FitnessMulti)
 
@@ -119,7 +79,7 @@ def nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit):
     toolbox.register("attr_int", random.randint, 0, len(filtered_routes) - 1)  # 0부터 n-1까지의 랜덤 인덱스
     toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_int, 1)  # 개체는 하나의 인덱스만 포함
 
-    population_size = 500
+    population_size = len(filtered_routes) // 10
     toolbox.register("population", tools.initRepeat, list, toolbox.individual, population_size)  # 10%의 개체로 초기 인구 생성
 
     # 평가 함수 등록
@@ -131,7 +91,7 @@ def nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit):
     # 유전 알고리즘 실행
     population = toolbox.population()  # 초기 인구 생성
 
-    ngen = 200  # 세대 수
+    ngen = 300  # 세대 수
     mu = population_size  # 부모 개체 수
     lambda_ = int(mu * 1.5)  # 자손 개체 수
     cxpb, mutpb = 0.8, 0.1  # 교차 및 돌연변이 확률
@@ -176,3 +136,23 @@ def select_weighted_best(pareto_front, routes, rtt_weight=0.5, cost_weight=0.5):
 def eval_route(individual, routes):
     route = routes[individual[0]]
     return route["total_rtt"], route["total_cost"]
+
+
+# 최적화된 전체 흐름을 사용하는 예시
+if __name__ == "__main__":
+    excel_file = '../Combinations.xlsx'
+    info_dict = make_info_dict(excel_file)
+
+    # 가능한 경로 조합 만들기 (모든 리전을 출발점으로 BFS로 경로 탐색)
+    route_list = find_routes(info_dict, count=4)
+
+    # 사용자 지정 필터 조건
+    csp_list = ['aws', 'gcp']
+
+    rtt_limit = 30
+    cost_limit = 30
+
+    pareto_front = nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit)
+    best_route = select_weighted_best(pareto_front, route_list)
+
+    print(f"Best route: {best_route['route']}, Total RTT: {best_route['total_rtt']}, Total Cost: {best_route['total_cost']}")
