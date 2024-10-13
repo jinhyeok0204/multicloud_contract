@@ -5,12 +5,18 @@ from collections import deque
 
 
 def filter_routes(route_list, csp_list, rtt_limit, cost_limit):
+    filtered_routes = []
 
-    return [
-        route for route in route_list
-        if all(csp.split('-')[0] in csp_list for csp in route['route']) and
-        route['total_rtt'] <= rtt_limit and route['total_cost'] <= cost_limit
-    ]
+    for route in route_list:
+        route_csp_set = {csp.split('-')[0] for csp in route['route']}
+
+        # 사용자가 선택한 모든 CSP가 경로에 포함되었는지 확인
+        if route_csp_set == set(csp_list):
+            # RTT 및 비용 상한을 넘지 않는 경로만 추가
+            if route['total_rtt'] <= rtt_limit and route['total_cost'] <= cost_limit:
+                filtered_routes.append(route)
+
+    return filtered_routes
 
 
 # 사용자가 제공한 데이터를 기반으로 최적화 정보를 구성
@@ -112,7 +118,7 @@ def nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit):
             unique_routes.add(route)
             final_pareto_front.append(individual)
 
-    return final_pareto_front
+    return final_pareto_front, filtered_routes
 
 
 # NSGA-II 결과로 도출된 Pareto front 중 가중합을 이용하여 최적 경로를 추출
@@ -147,12 +153,12 @@ if __name__ == "__main__":
     route_list = find_routes(info_dict, count=4)
 
     # 사용자 지정 필터 조건
-    csp_list = ['aws', 'gcp']
+    csp_list = ['aws']
 
-    rtt_limit = 30
-    cost_limit = 30
+    rtt_limit = 1000
+    cost_limit = 1000
 
-    pareto_front = nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit)
-    best_route = select_weighted_best(pareto_front, route_list)
+    pareto_front, filtered_routes = nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit)
+    best_route = select_weighted_best(pareto_front, filtered_routes)
 
     print(f"Best route: {best_route['route']}, Total RTT: {best_route['total_rtt']}, Total Cost: {best_route['total_cost']}")

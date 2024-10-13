@@ -88,6 +88,7 @@ def deploy():
     return render_template('deploy.html', user=user)
 
 
+# 배포한 가상 머신 배포 명세서 보기
 @deploy_bp.route('/deployments', methods=['GET'])
 def deployments():
     # 세션에 로그인된 사용자가 있는지 확인
