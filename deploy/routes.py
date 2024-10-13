@@ -1,7 +1,7 @@
 # 가상머신 배포 기능을 담당하는 모듈
 from flask import Blueprint, render_template, request, redirect, flash, url_for, session
 
-from models import User
+from models import User, Deployment
 from optimize.optimizer import make_info_dict, nsga2_with_filtered_routes, select_weighted_best, make_combination
 
 deploy_bp = Blueprint('deploy', __name__)
@@ -88,6 +88,18 @@ def deploy():
     return render_template('deploy.html', user=user)
 
 
-@deploy_bp.route('/deployments')
-def deployment_specification():
-    pass
+@deploy_bp.route('/deployments', methods=['GET'])
+def deployments():
+    # 세션에 로그인된 사용자가 있는지 확인
+    if 'username' not in session:
+        flash('로그인이 필요합니다.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    # 현재 로그인된 사용자 찾기
+    user = User.query.filter_by(username=session['username']).first()
+
+    # 사용자와 연결된 배포 내역 가져오기
+    deployments = Deployment.query.filter_by(user_id=user.id).all()
+
+    # 배포 내역을 템플릿으로 렌더링
+    return render_template('deployments.html', deployments=deployments)
