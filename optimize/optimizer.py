@@ -74,7 +74,7 @@ def nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit):
 
     # 사용자 입력에 의한 경로 필터링
     filtered_routes = filter_routes(route_list, csp_list, rtt_limit, cost_limit)
-
+    print(filtered_routes)
     if not filtered_routes:
         raise ValueError("사용자 조건에 맞는 경로가 없습니다.")
 

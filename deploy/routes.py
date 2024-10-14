@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, request, redirect, flash, url_for, session
 
 from models import User, Deployment
-from optimize.optimizer import make_info_dict, nsga2_with_filtered_routes, select_weighted_best, make_combination
+from optimize.optimizer import make_info_dict, nsga2_with_filtered_routes, select_weighted_best, find_routes
 
 deploy_bp = Blueprint('deploy', __name__)
 
@@ -18,12 +18,13 @@ def deploy_summary():
     cost_limit = float(request.form['cost_limit'])
     rtt_limit = float(request.form['rtt_limit'])
 
-    info_dict = make_info_dict()
-    route_list = make_combination(info_dict, vm_count)  # 가상머신 개수에 따른 조합 생성
+    info_dict = make_info_dict('Combinations.xlsx')
+    route_list = find_routes(info_dict, vm_count)
 
     try:
-        pareto_front = nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit)
-        best_route = select_weighted_best(pareto_front, route_list)
+        pareto_front, filtered_routes = nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit)
+        best_route = select_weighted_best(pareto_front, filtered_routes)
+
     except Exception as e:
         flash(str(e), 'danger')
         return redirect(url_for('deploy.deploy'))
