@@ -8,13 +8,13 @@
         <div class="card mt-5">
             <div class="card-body">
                 <h2 class="text-center">멀티 클라우드 가상머신 배포</h2>
+
                 <form id="deploy-form" action="/deploy_summary" method="POST">
                     <!-- 여러 CSP 선택 가능 -->
                     <div class="form-group mb-3">
                         <label>CSP 선택</label><br>
-                        <input type="checkbox" name="csp" value="AWS"> AWS<br>
-                        <input type="checkbox" name="csp" value="GCP"> GCP<br>
-                        <input type="checkbox" name="csp" value="Azure"> Azure<br>
+                        <input type="checkbox" name="csp" value="aws">AWS<br>
+                        <input type="checkbox" name="csp" value="gcp">GCP<br>
                     </div>
 
                     <!-- VM 개수 입력 -->
@@ -35,10 +35,26 @@
                         <input type="number" name="rtt_limit" class="form-control" required>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-block">배포 명세서 보기</button>
+                    <button type="submit" class="btn btn-primary btn-block">배포</button>
                 </form>
+
+                <!-- 로딩 스피너 -->
+                <div id="loading" style="display: none;" class="text-center mt-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p>최적화 중입니다. 잠시만 기다려주세요...</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // 폼 제출 시 로딩 스피너를 표시
+    document.getElementById('deploy-form').addEventListener('submit', function() {
+        document.getElementById('loading').style.display = 'block';
+    });
+</script>
+
 {% endblock %}

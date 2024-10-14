@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.12 (cloud_contranct)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (flaskProject1)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (cloud_contract)" project-jdk-type="Python SDK" />
 </project>

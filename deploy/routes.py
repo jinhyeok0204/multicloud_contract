@@ -1,8 +1,9 @@
 # 가상머신 배포 기능을 담당하는 모듈
 from flask import Blueprint, render_template, request, redirect, flash, url_for, session
 
-from models import User, Deployment
+from models import User, Deployment, Credential
 from optimize.optimizer import make_info_dict, nsga2_with_filtered_routes, select_weighted_best, find_routes
+import subprocess
 
 deploy_bp = Blueprint('deploy', __name__)
 
@@ -24,6 +25,7 @@ def deploy_summary():
     try:
         pareto_front, filtered_routes = nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit)
         best_route = select_weighted_best(pareto_front, filtered_routes)
+        print(best_route)
 
     except Exception as e:
         flash(str(e), 'danger')
@@ -36,8 +38,8 @@ def deploy_summary():
         vm_count=vm_count,
         cost_limit=cost_limit,
         rtt_limit=rtt_limit,
-        total_rtt=best_route['total_rtt'],
-        total_cost=best_route['total_cost']
+        total_rtt=round(best_route['total_rtt'], 2),
+        total_cost=round(best_route['total_cost'], 2)
     )
 
 
@@ -50,25 +52,19 @@ def deploy():
     user = User.query.filter_by(username=session['username']).first()
 
     if request.method == 'POST':
-        csp_list = request.form.getlist('csp')  # 사용자가 선택한 CSP들
+        csp_list = request.form.getlist('csp_list')  # 사용자가 선택한 CSP들
         vm_count = request.form['vm_count']  # VM 개수
         cost_limit = request.form['cost_limit']  # 비용 상한
         rtt_limit = request.form['rtt_limit']  # RTT 상한
 
-        # 사용자 자격 증명 확인
-        if 'AWS' in csp_list and (not user.aws_access_key or not user.aws_secret_key):
-            flash('AWS 자격 증명을 등록해야 합니다.', 'danger')
+
+        is_passed, missing_csp = check_user_credential(user, csp_list)
+
+        if not is_passed:
+            flash(f'{", ".join(missing_csp).upper()[1:-1]} 자격 증명이 등록되지 않았습니다.', 'danger')
             return redirect(url_for('credentials.credentials'))
 
-        if 'GCP' in csp_list and not user.gcp_credentials:
-            flash('GCP 자격 증명을 등록해야 합니다.', 'danger')
-            return redirect(url_for('credentials.credentials'))
-
-        if 'Azure' in csp_list and not user.azure_credentials:
-            flash('Azure 자격 증명을 등록해야 합니다.', 'danger')
-            return redirect(url_for('credentials.credentials'))
-
-        # 배포 로직 (CSP별로 처리 로직을 구현해야 합니다)
+        # 배포 로직
         deployed_vms = []
         for csp in csp_list:
             if csp == 'AWS':
@@ -79,9 +75,9 @@ def deploy():
                 # GCP 가상머신 배포 로직 추가 (Google Cloud SDK 사용)
                 deployed_vms.append(f'{vm_count}개의 VM을 GCP에 배포했습니다.')
 
-            elif csp == 'Azure':
-                # Azure 가상머신 배포 로직 추가 (Azure SDK 사용)
-                deployed_vms.append(f'{vm_count}개의 VM을 Azure에 배포했습니다.')
+            # elif csp == 'Azure':
+            #     # Azure 가상머신 배포 로직 추가 (Azure SDK 사용)
+            #     deployed_vms.append(f'{vm_count}개의 VM을 Azure에 배포했습니다.')
 
         flash(f'{", ".join(deployed_vms)} (비용 상한: {cost_limit} USD, RTT 상한: {rtt_limit} ms)', 'success')
         return redirect(url_for('main.menu'))
@@ -105,3 +101,40 @@ def deployments():
 
     # 배포 내역을 템플릿으로 렌더링
     return render_template('deployments.html', deployments=deployments)
+
+
+# 사용자 자격 증명 확인
+def check_user_credential(user, csp_list):
+
+    missing_credentials = []
+
+    for csp in csp_list:
+
+        credential = Credential.query.filter_by(user_id=user.id, csp=csp).first()
+
+        if not credential:
+            missing_credentials.append(csp)
+
+    if missing_credentials:
+        return False, missing_credentials
+    return True, None
+
+
+# def generate_terraform_file(csp, user_credentials, vm_count, region):
+#
+#     return tf_file_path, temp_dir
+
+#
+# def run_terraform(csp, user_credentials, vm_count, region):
+#     tf_file, temp_dir = generate_terraform_file(csp, user_credentials, vm_count, region)
+#
+#     # Terraform 초기화 및 실행
+#     subprocess.run(['terraform', 'init'], cwd=temp_dir, check=True)
+#     subprocess.run(['terraform', 'apply', '-auto-approve'], cwd=temp_dir, check=True)
+#
+#     # 임시 디렉토리 삭제
+#     subprocess.run(['terraform', 'destroy', '-auto-approve'], cwd=temp_dir, check=True)
+#
+#     return
+
+

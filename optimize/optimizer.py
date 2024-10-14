@@ -5,18 +5,13 @@ from collections import deque
 
 
 def filter_routes(route_list, csp_list, rtt_limit, cost_limit):
-    filtered_routes = []
+    return [
+        route for route in route_list
+        if all(csp.split('-')[0] in csp_list for csp in route['route']) and
+        route['total_rtt'] <= rtt_limit and
+        route['total_cost'] <= cost_limit
+    ]
 
-    for route in route_list:
-        route_csp_set = {csp.split('-')[0] for csp in route['route']}
-
-        # 사용자가 선택한 모든 CSP가 경로에 포함되었는지 확인
-        if route_csp_set == set(csp_list):
-            # RTT 및 비용 상한을 넘지 않는 경로만 추가
-            if route['total_rtt'] <= rtt_limit and route['total_cost'] <= cost_limit:
-                filtered_routes.append(route)
-
-    return filtered_routes
 
 
 # 사용자가 제공한 데이터를 기반으로 최적화 정보를 구성
@@ -74,7 +69,7 @@ def nsga2_with_filtered_routes(route_list, csp_list, rtt_limit, cost_limit):
 
     # 사용자 입력에 의한 경로 필터링
     filtered_routes = filter_routes(route_list, csp_list, rtt_limit, cost_limit)
-    print(filtered_routes)
+
     if not filtered_routes:
         raise ValueError("사용자 조건에 맞는 경로가 없습니다.")
 
@@ -144,16 +139,14 @@ def eval_route(individual, routes):
     return route["total_rtt"], route["total_cost"]
 
 
-# 최적화된 전체 흐름을 사용하는 예시
 if __name__ == "__main__":
     excel_file = '../Combinations.xlsx'
     info_dict = make_info_dict(excel_file)
 
-    # 가능한 경로 조합 만들기 (모든 리전을 출발점으로 BFS로 경로 탐색)
     route_list = find_routes(info_dict, count=4)
 
     # 사용자 지정 필터 조건
-    csp_list = ['aws']
+    csp_list = ['gcp']
 
     rtt_limit = 1000
     cost_limit = 1000
