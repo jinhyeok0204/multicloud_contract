@@ -49,6 +49,12 @@
                     <input type="hidden" name="total_rtt" value="{{ total_rtt }}">
                     <input type="hidden" name="total_cost" value="{{ total_cost }}">
 
+                    {% for csp, regions in region_map.items() %}
+                        {% for region in regions %}
+                            <input type="hidden" name="region_{{ csp }}" value="{{ region }}">
+                        {% endfor %}
+                    {% endfor %}
+
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary btn-lg">확인하고 배포 진행</button>
                         <a href="/deploy" class="btn btn-secondary btn-lg">취소</a>

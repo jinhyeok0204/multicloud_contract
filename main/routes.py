@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, session, redirect, url_for, flash
-
+from auth.routes import is_logged_in
 main_bp = Blueprint('main', __name__)
 
 
@@ -14,7 +14,5 @@ def home():
 # 로그인 후 제공하는 메뉴
 @main_bp.route('/menu')
 def menu():
-    if 'username' not in session:
-        flash('로그인이 필요합니다.', 'danger')
-        return redirect(url_for('auth.login'))
+    is_logged_in()
     return render_template('menu.html')

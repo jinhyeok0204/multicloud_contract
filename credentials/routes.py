@@ -3,6 +3,7 @@ import csv
 from flask import Blueprint, render_template, request, redirect, flash, url_for, session, current_app
 from app import db
 from models import User, Credential
+from auth.routes import is_logged_in
 import json
 
 credentials_bp = Blueprint('credentials', __name__)
@@ -10,9 +11,7 @@ credentials_bp = Blueprint('credentials', __name__)
 
 @credentials_bp.route('/credentials', methods=['GET', 'POST'])
 def credentials():
-    if 'username' not in session:
-        flash('로그인이 필요합니다.', 'danger')
-        return redirect(url_for('auth.login'))
+    is_logged_in()
 
     user = User.query.filter_by(username=session['username']).first()
 
@@ -57,18 +56,14 @@ def credentials():
 
 @credentials_bp.route('/credentials/view', methods=['GET'])
 def credentials_view():
-    if 'username' not in session:
-        flash('로그인이 필요합니다.', 'danger')
-        return redirect(url_for('auth.login'))
+    is_logged_in()
 
     user = User.query.filter_by(username=session['username']).first()
     return render_template('credentials_view.html', credentials=user.credentials)
 
 @credentials_bp.route('/credentials/delete/<int:credential_id>', methods=['POST'])
 def delete(credential_id):
-    if 'username' not in session:
-        flash('로그인이 필요합니다.', 'danger')
-        return redirect(url_for('auth.login'))
+    is_logged_in()
 
     # 해당 자격 증명을 DB에서 삭제
     credential = Credential.query.get_or_404(credential_id)

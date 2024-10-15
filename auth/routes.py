@@ -5,12 +5,11 @@ import bcrypt
 
 auth_bp = Blueprint('auth', __name__)
 
+
 # 프로필 화면
 @auth_bp.route('/profile', methods=['GET'])
 def profile():
-    if 'username' not in session:
-        flash('로그인이 필요합니다.', 'danger')
-        return redirect(url_for('auth.login'))
+    is_logged_in()
 
     user = User.query.filter_by(username=session['username']).first()
     return render_template('profile.html', user=user)
@@ -19,9 +18,7 @@ def profile():
 # 사용자 이름 변경
 @auth_bp.route('/profile/change_username', methods=['GET', 'POST'])
 def change_username():
-    if 'username' not in session:
-        flash('로그인이 필요합니다.', 'danger')
-        return redirect(url_for('auth.login'))
+    is_logged_in()
 
     user = User.query.filter_by(username=session['username']).first()
     new_username = request.form['new_username']
@@ -44,9 +41,7 @@ def change_username():
 # 비밀번호 변경
 @auth_bp.route('/profile/change_password', methods=['POST'])
 def change_password():
-    if 'username' not in session:
-        flash('로그인이 필요합니다.', 'danger')
-        return redirect(url_for('auth.login'))
+    is_logged_in()
 
     user = User.query.filter_by(username=session['username']).first()
     current_password = request.form['current_password'].encode('utf-8')
@@ -87,6 +82,7 @@ def signup():
 
     return render_template('signup.html')
 
+
 # 로그인
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -112,6 +108,12 @@ def login():
 # 로그아웃
 @auth_bp.route('/logout')
 def logout():
-    session.pop('username', None)
+    session.clear()
     flash('로그아웃되었습니다.', 'info')
     return redirect(url_for('auth.login'))
+
+
+def is_logged_in():
+    if 'username' not in session:
+        flash('로그인이 필요합니다.', 'danger')
+        return redirect(url_for('auth.login'))
