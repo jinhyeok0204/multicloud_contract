@@ -1,0 +1,11 @@
+bcrypt~=4.2.0
+Flask~=3.0.3
+pandas~=2.2.3
+deap~=1.4.1
+python-dotenv~=1.0.1
+alembic~=1.13.3
+Flask-SQLAlchemy~=3.1.1
+Flask-Migrate~=4.0.7
+cryptography~=43.0.1
+et-xmlfile~=1.1.0
+openpyxl~=3.1.5
