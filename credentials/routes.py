@@ -1,5 +1,6 @@
 import csv
 
+from cryptography.fernet import Fernet
 from flask import Blueprint, render_template, request, redirect, flash, url_for, session, current_app
 from app import db
 from models import User, Credential
@@ -22,29 +23,34 @@ def credentials():
             flash('자격 증명 파일을 업로드 하세요')
             return redirect(url_for('credentials.credentials'))
 
+        cipher = Fernet(user.encryption_key.encode('utf-8'))
+
         if csp == 'AWS':
             access_key, secret_key = process_aws_csv(credential_file)
             description = f'AWS 자격 증명 (Access Key: {access_key[:4]}****)'
-            credential_data = f'{access_key},{secret_key}'.encode()  # CSV 형식으로 저장
+            credential_data = f'{access_key},{secret_key}'.encode()
 
         elif csp == 'GCP':
-            file_data = credential_file.read()  # 파일 데이터를 읽음
-            credential_json = json.loads(file_data)  # JSON으로 변환
-            project_id = credential_json.get('project_id', 'Unknown Project')  # 프로젝트 ID 얻기
+            file_data = credential_file.read()
+            credential_json = json.loads(file_data)
+            project_id = credential_json.get('project_id', 'Unknown Project')
             description = f'GCP 자격 증명 (프로젝트: {project_id})'
             credential_data = file_data
 
         elif csp == 'Azure':
-            credential_data = credential_file.read()  # 파일 데이터를 읽음
-            credential_json = json.loads(credential_data)  # JSON으로 변환
-            subscription_id = credential_json.get('subscriptionId', 'Unknown Subscription')  # 구독 ID 얻기
+            credential_data = credential_file.read()
+            credential_json = json.loads(credential_data)
+            subscription_id = credential_json.get('subscriptionId', 'Unknown Subscription')
             description = f'Azure 자격 증명 (구독 ID: {subscription_id})'
 
         else:
             flash('CSP를 선택하세요.', 'danger')
             return redirect(url_for('credentials.credentials'))
 
-        credential = Credential(user_id=user.id, csp=csp, credential_data=credential_data, description=description)
+        # 자격 증명 암호화
+        encrypted_credential_data = cipher.encrypt(credential_data)
+
+        credential = Credential(user_id=user.id, csp=csp, credential_data=encrypted_credential_data, description=description)
         db.session.add(credential)
         db.session.commit()
 
@@ -59,7 +65,20 @@ def credentials_view():
     is_logged_in()
 
     user = User.query.filter_by(username=session['username']).first()
-    return render_template('credentials_view.html', credentials=user.credentials)
+    cipher = Fernet(user.encryption_key.encode('utf-8'))
+
+    decrypted_credentials = []
+    for credential in user.credentials:
+        decrypted_data = cipher.decrypt(credential.credential_data).decode('utf-8')  # 자격 증명 복호화
+        decrypted_credentials.append({
+            'id': credential.id,
+            'csp': credential.csp,
+            'description': credential.description,
+            'data': decrypted_data
+        })
+
+    return render_template('credentials_view.html', credentials=decrypted_credentials)
+
 
 @credentials_bp.route('/credentials/delete/<int:credential_id>', methods=['POST'])
 def delete(credential_id):

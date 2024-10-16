@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, request, flash, session,
 from app import db
 from models import User
 import bcrypt
-
+from cryptography.fernet import Fernet
 auth_bp = Blueprint('auth', __name__)
 
 
@@ -71,9 +71,10 @@ def signup():
             return redirect(url_for('auth.signup'))
 
         hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+        encryption_key = Fernet.generate_key().decode('utf-8')
 
         # 새 사용자 생성
-        new_user = User(username=username, password=hashed_password.decode('utf-8'))
+        new_user = User(username=username, password=hashed_password.decode('utf-8'), encryption_key=encryption_key)
         db.session.add(new_user)
         db.session.commit()
 

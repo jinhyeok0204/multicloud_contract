@@ -5,6 +5,7 @@ from models import User, Deployment, Credential
 from optimize.optimizer import make_info_dict, nsga2_with_filtered_routes, select_weighted_best, find_routes
 from auth.routes import is_logged_in
 import subprocess
+from cryptography.fernet import Fernet
 
 deploy_bp = Blueprint('deploy', __name__)
 
@@ -57,11 +58,13 @@ def deploy():
 
     if request.method == 'POST':
         csp_list = eval(request.form.getlist('csp_list')[0])  # 사용자가 선택한 CSP들
-        vm_count = request.form['vm_count']  # VM 개수
-        cost_limit = request.form['cost_limit']  # 비용 상한
-        rtt_limit = request.form['rtt_limit']  # RTT 상한
+        vm_count = request.form['vm_count']
+        cost_limit = request.form['cost_limit']
+        rtt_limit = request.form['rtt_limit']
 
         region_map = {}
+        for csp in csp_list:
+            region_map[csp] = request.form.getlist(f'region_{csp}')
 
         is_passed, missing_csp = check_user_credential(user, csp_list)
 
@@ -74,8 +77,11 @@ def deploy():
         for csp in csp_list:
             credential = Credential.query.filter_by(user_id=user.id, csp=csp).first()
 
-            for region in region_map:
+            cipher = Fernet(user.encryption_key.encode('utf-8'))
+            decrypted_data = cipher.decrypt(credential.credential_data).decode('utf-8')
 
+            for region in region_map[csp]:
+                pass
 
         flash(f'{", ".join(deployed_vms)} (비용 상한: {cost_limit} USD, RTT 상한: {rtt_limit} ms)', 'success')
         return redirect(url_for('main.menu'))
@@ -109,21 +115,10 @@ def check_user_credential(user, csp_list):
     return True, None
 
 
-# def generate_terraform_file(csp, user_credentials, vm_count, region):
-#
-#     return tf_file_path, temp_dir
+def generate_terraform_file(csp, user_credentials, vm_count, region):
+    pass
 
-#
-# def run_terraform(csp, user_credentials, vm_count, region):
-#     tf_file, temp_dir = generate_terraform_file(csp, user_credentials, vm_count, region)
-#
-#     # Terraform 초기화 및 실행
-#     subprocess.run(['terraform', 'init'], cwd=temp_dir, check=True)
-#     subprocess.run(['terraform', 'apply', '-auto-approve'], cwd=temp_dir, check=True)
-#
-#     # 임시 디렉토리 삭제
-#     subprocess.run(['terraform', 'destroy', '-auto-approve'], cwd=temp_dir, check=True)
-#
-#     return
 
+def run_terraform(csp, user_credentials, vm_count, region):
+    pass
 
