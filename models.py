@@ -10,6 +10,7 @@ class User(db.Model):
     password = db.Column(db.String(150), nullable=False)
     credentials = db.relationship('Credential', backref='user', lazy=True)
     deployments = db.relationship('Deployment', backref='user', lazy=True)
+    encryption_key = db.Column(db.String(150), nullable=False) # 사용자별 암호화 키
 
     def __repr__(self):
         return f'<User {self.username}>'
