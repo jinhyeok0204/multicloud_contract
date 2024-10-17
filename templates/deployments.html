@@ -4,16 +4,38 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2>배포 명세서</h2>
+    <h2 class="text-center mb-4">배포 명세서</h2>
 
-    {% if deployments %}
-        <ul>
-            {% for deployment in deployments %}
-                <li>{{ deployment.details }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>등록된 배포 명세서가 없습니다.</p>
-    {% endif %}
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <ul class="list-group">
+                {% for deployment in deployments %}
+                    <li class="list-group-item mb-3 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="text-primary">배포 경로:</h5>
+                                <p>{{ deployment.details.route }}</p>
+
+                                <h5 class="text-secondary">세부 정보:</h5>
+                                <ul>
+                                    <li><strong>총 RTT:</strong> {{ deployment.details['total RTT'] }} ms</li>
+                                    <li><strong>총 비용:</strong> {{ deployment.details['total Cost'] }} USD</li>
+                                    <li><strong>RTT 상한:</strong> {{ deployment.details['RTT Limit'] }} ms</li>
+                                    <li><strong>비용 상한:</strong> {{ deployment.details['Cost Limit'] }} USD</li>
+                                    <li><strong>가상머신 개수:</strong> {{ deployment.details['VM Count'] }}</li>
+                                </ul>
+                            </div>
+                            <!-- 삭제 버튼 -->
+                            <form action="{{ url_for('deploy.delete_deployment', deployment_id=deployment.id) }}" method="POST" onsubmit="return confirm('이 배포 명세서를 삭제하시겠습니까?');">
+                                <button type="submit" class="btn btn-danger">삭제</button>
+                            </form>
+                        </div>
+                    </li>
+                {% else %}
+                    <p class="text-center">등록된 배포 명세서가 없습니다.</p>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 </div>
 {% endblock %}

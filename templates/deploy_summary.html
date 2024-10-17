@@ -16,7 +16,7 @@
                     </li>
                     <li class="list-group-item">
                         <strong>최적 배포 위치 (CSP 경로):</strong>
-                        <span class="text-success">{{ best_route | join(' <-> ') }}</span>
+                        <span class="text-success">{{ only_best_route | join(' <-> ') }}</span>
                     </li>
                     <li class="list-group-item">
                         <strong>가상머신 개수:</strong>
@@ -42,6 +42,7 @@
 
                 <form action="/deploy" method="POST">
                     <!-- 숨겨진 필드 -->
+                    <input type="hidden" name="best_route" value="{{ best_route }}">
                     <input type="hidden" name="csp_list" value="{{ csp_list }}">
                     <input type="hidden" name="vm_count" value="{{ vm_count }}">
                     <input type="hidden" name="cost_limit" value="{{ cost_limit }}">

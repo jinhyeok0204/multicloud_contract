@@ -1,3 +1,5 @@
 .env
 .venv
 instance
+terraform
+terraform_test.py

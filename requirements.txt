@@ -9,3 +9,4 @@ Flask-Migrate~=4.0.7
 cryptography~=43.0.1
 et-xmlfile~=1.1.0
 openpyxl~=3.1.5
+python-terraform~=0.10.1
