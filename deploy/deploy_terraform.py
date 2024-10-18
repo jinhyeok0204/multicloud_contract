@@ -4,11 +4,15 @@ import os
 import tempfile
 import subprocess
 import json
+import logging
 
+TERRAFORM_BIN_PATH=r'C:\terraform\terraform'
+
+logging.basicConfig(level=logging.INFO)
 
 # 각 csp에 맞는 Terraform 파일 생성
 def create_terraform_files(csp, region, credential_data, temp_dir):
-    if csp == 'AWS':
+    if csp == 'aws':
         main_tf_content = f"""
         provider "aws" {{
           region = "{region}"
@@ -34,7 +38,7 @@ def create_terraform_files(csp, region, credential_data, temp_dir):
         }}
         """
 
-    elif csp == 'GCP':
+    elif csp == 'gcp':
         main_tf_content = f"""
         provider "google" {{
           credentials = "{credential_data['gcp_credentials']}"
@@ -79,12 +83,24 @@ def deploy_vm(csp, region, credential_data):
         create_terraform_files(csp, region, credential_data, temp_dir)
 
         # Terraform 초기화 및 실행
-        subprocess.run(['terraform', 'init'], cwd=temp_dir, check=True)
-        subprocess.run(['terraform', 'apply', '-auto-approve'], cwd=temp_dir, check=True)
+        subprocess.run([TERRAFORM_BIN_PATH, 'init'], cwd=temp_dir, check=True)
+        subprocess.run([TERRAFORM_BIN_PATH, 'apply', '-auto-approve'], cwd=temp_dir, check=True)
 
-        result = subprocess.check_output(['terraform', 'output', '-json'], cwd=temp_dir, text=True)
+        result = subprocess.check_output([TERRAFORM_BIN_PATH, 'output', '-json'], cwd=temp_dir, text=True)
         return json.loads(result)
+
+    except Exception as e:
+        logging.error(f"{csp}-{region} VM 배포 중 에러 발생: {e}")
+        raise
 
     finally:
         # 임시 디렉토리 삭제
         shutil.rmtree(temp_dir)
+
+
+def rollback_vm(csp, region, temp_dir):
+    try:
+        subprocess.run([TERRAFORM_BIN_PATH, 'destroy', '-auto-approve'], cwd=temp_dir, check=True)
+        logging.info(f"VM 롤백 완료: {csp}-{region}")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"롤백 실패: {e}")

@@ -4,7 +4,7 @@ from app import db
 from models import User, Deployment, Credential
 from optimize.optimizer import make_info_dict, nsga2_with_filtered_routes, select_weighted_best, find_routes
 from auth.routes import is_logged_in
-from deploy.deploy_terraform import deploy_vm
+from deploy.deploy_terraform import deploy_vm, rollback_vm
 from cryptography.fernet import Fernet
 import json
 
@@ -103,10 +103,11 @@ def deployments():
         details['total Cost'] = round(details['total Cost'], 2)
 
         parsed_deployments.append({
-            'id':deployment.id,
-            'details':details,
+            'id': deployment.id,
+            'details': details,
         })
     return render_template('deployments.html', deployments=parsed_deployments)
+
 
 @deploy_bp.route('/deployments/delete/<int:deployment_id>', methods=['POST'])
 def delete_deployment(deployment_id):
@@ -130,33 +131,48 @@ def delete_deployment(deployment_id):
 def deploy_vms_to_region(user, csp_list, region_map):
     deployed_vms = []
     success = True # 배포 성공 여부
+    temp_dirs = []
+    try:
+        for csp in csp_list:
+            credential = Credential.query.filter_by(user_id=user.id, csp=csp.upper()).first()
 
-    for csp in csp_list:
-        credential = Credential.query.filter_by(user_id=user.id, csp=csp.upper()).first()
+            cipher = Fernet(user.encryption_key.encode('utf-8'))
+            decrypted_data = cipher.decrypt(credential.credential_data).decode('utf-8')
 
-        cipher = Fernet(user.encryption_key.encode('utf-8'))
-        decrypted_data = cipher.decrypt(credential.credential_data).decode('utf-8')
+            # CSP에 맞는 자격 증명 파싱
+            if csp == 'aws':
+                access_key, secret_key = decrypted_data.split(',')
+                credential_data = {'access_key': access_key, 'secret_key': secret_key}
+            elif csp == 'gcp':
+                gcp_credentials = decrypted_data
+                project_id = json.loads(gcp_credentials).get('project_id')
+                credential_data = {'gcp_credentials': gcp_credentials, 'project_id': project_id}
 
-        # CSP에 맞는 자격 증명 파싱
-        if csp == 'aws':
-            access_key, secret_key = decrypted_data.split(',')
-            credential_data = {'access_key': access_key, 'secret_key': secret_key}
-        elif csp == 'gcp':
-            gcp_credentials = decrypted_data
-            project_id = json.loads(gcp_credentials).get('project_id')
-            credential_data = {'gcp_credentials': gcp_credentials, 'project_id': project_id}
+            # 각 리전에 대해 가상머신 배포
+            for region in region_map[csp]:
+                try:
+                    print(f"{csp}, {region} deploy !)")
+                    output = deploy_vm(csp, region, credential_data)
+                    if output.get('instance_public_ip', None):
+                        deployed_vms.append(f"{csp}-{region} VM : {output.get('instance_public_ip', {}).get('value', 'N/A')}")
+                    else:
+                        raise Exception(f"VM 배포 실패: {csp}-{region}")
+                except Exception as e:
+                    print(f"Error deploying VM: {e}")
+                    success = False
+                    break
 
-        # 각 리전에 대해 가상머신 배포
-        for region in region_map[csp]:
-            print(f"{csp}, {region} deploy !)")
-            output = deploy_vm(csp, region, credential_data)
-            if output.get('instance_public_ip', None):
-                deployed_vms.append(f"{csp}-{region} VM : {output.get('instance_public_ip', {}).get('value', 'N/A')}")
-            else:
-                success = False
-                break
+            if not success:
+                raise Exception('VM 배포 실패로 인한 롤백 시작')
+
+    except Exception as e:
+        for temp_dir in temp_dirs:
+            rollback_vm(csp, region ,temp_dir)
+        success = False
 
     return deployed_vms, success
+
+
 
 
 def save_deployment_to_db(user_id, best_route, vm_count, cost_limit, rtt_limit):
